@@ -4,56 +4,21 @@
 /*******************************************************************************
 Usage:
 
-Put autoPowerDownReset() in your setup()
+Put the following line in your setup():
 
-Put autoPowerDown() in your (main) loop()
+autoPowerDownReset();
 
-If you want to run some specific code before a power down, put the following 
-code imediately before autoPowerDown()
+Put one of the following lines in your (main) loop():
 
-if (autoShutdownPending())
-{
-  //Your code here
-};
+autoPowerDown();
 
-The default APD timer interval is 8 second and the default timeout value is
-set to 4, resulting in a a power down when there is no button pressed for
-32 seconds (4 * 8)
+For powering down after ~30.2 seconds of no activity.
 
-You can change the default interval and value by putting one of the following
-defines before the include:
+autoPowerDown(uint16_t timeout);
 
-#define APD_INTERVAL WDTO_1S  //1 second interval
-#define APD_INTERVAL WDTO_4S  //4 second interval
-#define APD_INTERVAL WDTO_8S  //8 second interval (default)
+For when you want a different power down time.
+timeout = power down time in seconds / 256.
 
-To change the default value add the following define before the include also:
-
-#define APD_VALUE n << 1 // where n = 1 to 127
-
-Example:
-if you want a timeout of 1 minute you'd add the following defines:
-
-#define APD_INTERVAL WDTO_4S
-#define APD_VALUE 15 << 1
-
-if you want a timeout of 20 seconds you'd add the following defines:
-
-#define APD_INTERVAL WDTO_4S
-#define APD_VALUE 5 << 1
-
-if you want a timeout of 15 seconds you'd add the following defines:
-
-#define APD_INTERVAL WDTO_1S
-#define APD_VALUE 15 << 1
-
-Notes:
-
-After you've compiled a sketch with the above defines added, changes to the
-defines will not take effect until you close and reopen the sketch.
-
-The Maximum power down time posible is 16 minutes and 56 seconds
-After powering up the LEDs remain off.
 *******************************************************************************/
 
 #include <Arduino.h>
@@ -65,54 +30,15 @@ After powering up the LEDs remain off.
 
 void autoPowerDownReset();
 
-void autoPowerDown();
+uint16_t get_millis_div256();
 
-extern volatile uint8_t APD_timer; //bits 7-1: timer value, bit 0: power down flag
+void autoPowerDown(uint16_t timeout = 118); //~30,2 sec
 
-#ifndef APD_VALUE
-  #define APD_VALUE 4 << 1
-#endif
-#ifndef APD_INTERVAL
-  #define APD_INTERVAL WDTO_8S
-#endif
+extern uint16_t APD_time;
 
 #ifdef AB_DEVKIT
   #error "Arduboy DevKit is not supported (No wake up button)"
 #endif
-
-/*******************************************************************************
-* WDT_interrupt_disable
-* A shorter version of wdt_disable()
-*******************************************************************************/
-
-#define wdt_interrupt_disable()                                        \
-  asm volatile (                                                       \
-    "sts  %[WDTREG],  %[WDCE_WDE]  \n\t"                               \
-    "sts  %[WDTREG],  __zero_reg__ \n\t"                               \
-    :                                                                  \
-    : [WDTREG]   "M" (_SFR_MEM_ADDR(WDTCSR)),                          \
-      [WDCE_WDE] "r" ((uint8_t)(_BV(_WD_CHANGE_BIT) | _BV(WDE)))       \
-  )
-
-/*******************************************************************************
-* WDT_interrupt_enable
-* enables WDT interrupt and disables WDT reset.
-*******************************************************************************/
-
-#define wdt_interrupt_enable(interval)                                 \
-  asm volatile (                                                       \
-    "in   __tmp_reg__,  __SREG__  \n\t"                                \
-    "cli                          \n\t"                                \
-    "wdr                          \n\t"                                \
-    "sts  %[WDTREG],  %[WDCE_WDE] \n\t"                                \
-    "sts   %[WDTREG],  %[WDVALUE]  \n\t"                               \
-    "out  __SREG__, __tmp_reg__   \n\t"                                \
-    :                                                                  \
-    : [WDTREG]   "M" (_SFR_MEM_ADDR(WDTCSR)),                          \
-      [WDCE_WDE] "r" ((uint8_t)(_BV(_WD_CHANGE_BIT) | _BV(WDE))),      \
-      [WDVALUE]  "r" ((uint8_t)((interval & 0x08 ? (1<<WDP3) : 0x00) | \
-                     (1<<WDIF) | (1<<WDIE) | (interval & 0x07)))       \
-  )
 
 /*******************************************************************************
  * INT6_enable
@@ -162,13 +88,5 @@ extern volatile uint8_t APD_timer; //bits 7-1: timer value, bit 0: power down fl
     Arduboy2::digitalWriteRGB(RGB_OFF, RGB_OFF, RGB_OFF); \
     TXLED0; RXLED0; /* Rx Tx LEDs off */
 #endif
-
-/*******************************************************************************
-* autoPowerDownPending()
-* Macro to test if a power down is pending
-*******************************************************************************/
-
-#define autoPowerDownPending() \
-  (APD_Timeout & 1)
 
 #endif //AUTOPOWERDOWN_H

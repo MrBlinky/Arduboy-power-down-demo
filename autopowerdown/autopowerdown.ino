@@ -20,14 +20,10 @@ void loop()
 {
   autoPowerDown();
   if (!arduboy.nextFrame()) return;
-  
-  if (arduboy.buttonsState()) autoPowerDownReset(); //reset power down time on any button press
 
   arduboy.clear();
-
+  
   Sprites::draw(vortex_x, vortex_y, vortex_sprite, vortex_frame ++, NULL, 0, SPRITE_MASKED);
-
   vortex_frame %= 15;
-    
   arduboy.display();
 }
