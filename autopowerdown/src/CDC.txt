@@ -1,8 +1,0 @@
-Adapted version of CDC.cpp for use in combination with auto power down.
-
-This version does nor reset and disable the WDT whic prevents the 
-auto power down feature from working.
-
-Drawbacks:
-When the comport is opened for example with Arduino IDE monitor at 1200 baud
-the bootloader mode is triggered instandly.
