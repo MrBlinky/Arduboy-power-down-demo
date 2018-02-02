@@ -18,6 +18,7 @@ resets APD millis to current millis
 
 void autoPowerDownReset()
 {
+#ifndef ARDUBOY_CORE    
   uint16_t time;    
   asm volatile(
     "    in    __tmp_reg__, __SREG__    \n\t" //uint8_t oldSREG = SREG;
@@ -33,14 +34,16 @@ void autoPowerDownReset()
       [APD_time0] ""  ((uint8_t*)(&APD_time) + 0),
       [APD_time1] ""  ((uint8_t*)(&APD_time) + 1)
   );
+#endif  
 }
 
 /*******************************************************************************
-autoPowerDownReset
+autoPowerDown
 *******************************************************************************/
 
-void autoPowerDown(uint16_t timeout)
+void autoPowerDown(uint8_t timeout)
 {
+#ifndef ARDUBOY_CORE
   uint16_t time;
   asm volatile(
     "    in    __tmp_reg__, __SREG__    \n\t" //uint8_t oldSREG = SREG;
@@ -50,16 +53,16 @@ void autoPowerDown(uint16_t timeout)
     "    out   __SREG__, __tmp_reg__    \n\t" //SREG = oldSREG
     "    sub   %A[time], %A[APD_time]   \n\t" //time -= APD_time
     "    sbc   %B[time], %B[APD_time]   \n\t" 
-    "    brcc  1f                       \n\t" //time = abs(time) 
-    "    neg   %A[time]                 \n\t" 
-    "    neg   %B[time]                 \n\t" 
     "1:                                 \n\t" 
     : [time]     "=&r" (time)
     : [millis1]  ""    ((uint8_t*)(&timer0_millis)+1),
       [millis2]  ""    ((uint8_t*)(&timer0_millis)+2),
       [APD_time] "r"   (APD_time)
   );  
-  if (time >= timeout)
+  if (time >= timeout * 16)
+#else
+ if (buttonsIdleTime() >= timeout)
+#endif    
   {
   #ifndef ARDUBOY_NO_USB
     UDIEN = 0;            //disable USB interrupts left enabled after upload
@@ -76,7 +79,11 @@ void autoPowerDown(uint16_t timeout)
     USBDevice.attach(); 
   #endif
     Arduboy2Core::displayOn();
+#ifndef ARDUBOY_CORE    
     autoPowerDownReset();
+#endif    
   }
+#ifndef ARDUBOY_CORE    
   if (Arduboy2Core::buttonsState()) autoPowerDownReset(); //reset power down time on any button press
+#endif  
 }

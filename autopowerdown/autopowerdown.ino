@@ -11,7 +11,6 @@ uint8_t vortex_frame;
                
 void setup() 
 {
-  autoPowerDownReset();
   arduboy.begin();
   arduboy.setFrameRate(60);
 }
@@ -25,5 +24,6 @@ void loop()
   
   Sprites::draw(vortex_x, vortex_y, vortex_sprite, vortex_frame ++, NULL, 0, SPRITE_MASKED);
   vortex_frame %= 15;
+  
   arduboy.display();
 }

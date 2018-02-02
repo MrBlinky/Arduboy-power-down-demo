@@ -4,20 +4,16 @@
 /*******************************************************************************
 Usage:
 
-Put the following line in your setup():
-
-autoPowerDownReset();
-
-Put one of the following lines in your (main) loop():
+Put the following line in your (main) loop() for default power down after
+~32.8 seconds of no button activity. 
 
 autoPowerDown();
 
-For powering down after ~30.2 seconds of no activity.
+For other power down timeouts use:
 
-autoPowerDown(uint16_t timeout);
+autoPowerDown(uint8_t timeout);
 
-For when you want a different power down time.
-timeout = power down time in seconds / 256.
+Where timeout = power down time in seconds / 4.096
 
 *******************************************************************************/
 
@@ -30,9 +26,7 @@ timeout = power down time in seconds / 256.
 
 void autoPowerDownReset();
 
-uint16_t get_millis_div256();
-
-void autoPowerDown(uint16_t timeout = 118); //~30,2 sec
+void autoPowerDown(uint8_t timeout = 8); //~32,8 sec
 
 extern uint16_t APD_time;
 
@@ -76,7 +70,7 @@ extern uint16_t APD_time;
 * Macro to turn all LEDs off including PWM ones
 *******************************************************************************/
 
-#ifndef ARDUINO_AVR_PROMICRO
+#ifndef AB_ALTERNATE_WIRING
   #define all_LEDs_off()                                  \
     TCCR1A = 0; /* disable Arduboy RGB LED PWMs */        \
     Arduboy2::digitalWriteRGB(RGB_OFF, RGB_OFF, RGB_OFF); \
