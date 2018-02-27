@@ -9,11 +9,15 @@ Put the following line in your (main) loop() for default power down after
 
 autoPowerDown();
 
-For other power down timeouts use:
+For different power down times use:
 
 autoPowerDown(uint8_t timeout);
 
 Where timeout = power down time in seconds / 4.096
+
+Example:
+
+autoPowerDown(44); //Power down after ~3 minutes of inactivity
 
 *******************************************************************************/
 
@@ -36,7 +40,7 @@ extern uint16_t APD_time;
 
 /*******************************************************************************
  * INT6_enable
- * Enable INT6 interrupt on low level. (attachInterrupt)
+ * Macro to Enable INT6 interrupt on low level. (attachInterrupt)
  ******************************************************************************/
 
 #define INT6_enable() \
@@ -45,7 +49,7 @@ extern uint16_t APD_time;
 
 /*******************************************************************************
  * INT6_disable
- * Disables INT6 interrupt (detachInterrupt)
+ * Macro to Disables INT6 interrupt (detachInterrupt)
  ******************************************************************************/
 
 #define INT6_disable() \
@@ -53,18 +57,17 @@ extern uint16_t APD_time;
 
 /*******************************************************************************
 * activatePowerDown()
-* Macro to activate power down with BOD disabled
+* Macro to activate power down
 *******************************************************************************/
 
-#define activatePowerDown()            \
-  set_sleep_mode(SLEEP_MODE_PWR_DOWN); \
-  cli();                               \
-  sleep_enable();                      \
-  sei();                               \
-  sleep_cpu();                         \
-  sleep_disable();                     \
+#define activatePowerDown()                                       \
+  cli();                                                          \
+  SMCR = SLEEP_MODE_PWR_DOWN | _BV(SE); /* sleep mode + enable */ \
+  sei();                                                          \
+  sleep_cpu();                                                    \
+  SMCR = 0;                             /* sleep disable*/        \
   sei();
-
+  
 /*******************************************************************************
 * all_LEDs_off()
 * Macro to turn all LEDs off including PWM ones
@@ -76,10 +79,10 @@ extern uint16_t APD_time;
     Arduboy2::digitalWriteRGB(RGB_OFF, RGB_OFF, RGB_OFF); \
     TXLED0; RXLED0; /* Rx Tx LEDs off */
 #else
-  #define all_LEDs_off()                                  \
-    TCCR1A = 0; /* disable Pro Micro BLUE RED LED PWMs */ \
-    TCCR0A = 0; /* disable Pro Micro GREEN LED PWM */     \
-    Arduboy2::digitalWriteRGB(RGB_OFF, RGB_OFF, RGB_OFF); \
+  #define all_LEDs_off()                                      \
+    TCCR1A = 0; /* disable Pro Micro BLUE and RED LED PWMs */ \
+    TCCR0A = 0; /* disable Pro Micro GREEN LED PWM */         \
+    Arduboy2::digitalWriteRGB(RGB_OFF, RGB_OFF, RGB_OFF);     \
     TXLED0; RXLED0; /* Rx Tx LEDs off */
 #endif
 

@@ -19,11 +19,9 @@ void loop()
 {
   autoPowerDown();
   if (!arduboy.nextFrame()) return;
-
-  arduboy.clear();
   
   Sprites::draw(vortex_x, vortex_y, vortex_sprite, vortex_frame ++, NULL, 0, SPRITE_MASKED);
   vortex_frame %= 15;
   
-  arduboy.display();
+  arduboy.display(CLEAR_BUFFER);
 }
