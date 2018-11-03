@@ -19,6 +19,8 @@ Example:
 
 autoPowerDown(44); //Power down after ~3 minutes of inactivity
 
+Arduboy can be woken up by pressing the A or B button
+
 *******************************************************************************/
 
 #include <Arduino.h>
@@ -35,7 +37,7 @@ void autoPowerDown(uint8_t timeout = 8); //~32,8 sec
 extern uint16_t APD_time;
 
 #ifdef AB_DEVKIT
-  #error "Arduboy DevKit is not supported (No wake up button)"
+  #error "Arduboy DevKit is not supported"
 #endif
 
 /*******************************************************************************
@@ -49,11 +51,28 @@ extern uint16_t APD_time;
 
 /*******************************************************************************
  * INT6_disable
- * Macro to Disables INT6 interrupt (detachInterrupt)
+ * Macro to Disable INT6 interrupt (detachInterrupt)
  ******************************************************************************/
 
 #define INT6_disable() \
   EIMSK &= ~_BV(INT6);
+
+/*******************************************************************************
+ * PCINT0_enable
+ * Macro to enable Pin change interrupt (attachInterrupt)
+ ******************************************************************************/
+  
+#define PCINT0_enable()  \
+  PCICR  |= _BV(PCIE0); \
+  PCMSK0 |= _BV(PCINT4);
+  
+/*******************************************************************************
+ * PCINT0_disable
+ * Macro to Disable Pin Change interrupt (detachInterrupt)
+ ******************************************************************************/
+  
+#define PCINT0_disable() \
+  PCICR &= ~_BV(PCIE0);
 
 /*******************************************************************************
 * activatePowerDown()

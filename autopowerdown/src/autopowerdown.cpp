@@ -11,6 +11,13 @@ Executed when the A-BUTTON is pressed
 EMPTY_INTERRUPT (INT6_vect)
     
 /*******************************************************************************
+PCINT0 pinchange interrupt service routine
+Executed when the B-BUTTON is pressed
+*******************************************************************************/
+
+EMPTY_INTERRUPT (PCINT0_vect)
+    
+/*******************************************************************************
 autoPowerDownReset
 
 resets auto power down millis to current millis
@@ -73,8 +80,10 @@ void autoPowerDown(uint8_t timeout)
     all_LEDs_off();
     Arduboy2Core::displayOff();
     INT6_enable();               //enable A-button interrupt so Arduboy can wake up by pressing it.
+    PCINT0_enable();             //enable B-button interrupt so Arduboy can wake up by pressing it.
     activatePowerDown();
     INT6_disable();              //disable A-button interrupt. No unneccesary interrupts wanted.
+    PCINT0_disable();            //disable B-button interrupt. No unneccesary interrupts wanted.
   #ifndef ARDUBOY_NO_USB
     init();                      //restore USB support
     USBDevice.attach(); 
