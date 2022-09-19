@@ -25,7 +25,6 @@ resets auto power down millis to current millis
 
 void autoPowerDownReset()
 {
-#ifndef ARDUBOY_CORE    
   uint16_t time;    
   asm volatile(
     "    in    __tmp_reg__, __SREG__    \n\t" //uint8_t oldSREG = SREG;
@@ -41,7 +40,6 @@ void autoPowerDownReset()
       [APD_time0] ""  ((uint8_t*)(&APD_time) + 0),
       [APD_time1] ""  ((uint8_t*)(&APD_time) + 1)
   );
-#endif  
 }
 
 /*******************************************************************************
@@ -50,7 +48,6 @@ autoPowerDown
 
 void autoPowerDown(uint8_t timeout)
 {
-#ifndef ARDUBOY_CORE
   uint16_t time;
   asm volatile(
     "    in    __tmp_reg__, __SREG__    \n\t" //uint8_t oldSREG = SREG;
@@ -67,16 +64,14 @@ void autoPowerDown(uint8_t timeout)
       [APD_time] "r"   (APD_time)
   );  
   if (time >= timeout * 16)
-#else
- if (buttonsIdleTime() >= timeout)
-#endif    
  //power down timeout has been reached, so power down
   {
-  #ifndef ARDUBOY_NO_USB
-    UDIEN = 0;            //disable USB interrupts left enabled after upload
-    USBCON = _BV(FRZCLK); //disable VBUS transition interrupt, freeze USB clock for power savings
-    UDCON  = 1 << DETACH; //disconnect from USB bus
-  #endif
+    if (UHWCON & _BV(UVREGE)) // Test if USB is enabled
+    {
+      UDIEN = 0;            //disable USB interrupts left enabled after upload
+      USBCON = _BV(FRZCLK); //disable VBUS transition interrupt, freeze USB clock for power savings
+      UDCON  = 1 << DETACH; //disconnect from USB bus
+    }
     all_LEDs_off();
     Arduboy2Core::displayOff();
     INT6_enable();               //enable A-button interrupt so Arduboy can wake up by pressing it.
@@ -84,18 +79,13 @@ void autoPowerDown(uint8_t timeout)
     activatePowerDown();
     INT6_disable();              //disable A-button interrupt. No unneccesary interrupts wanted.
     PCINT0_disable();            //disable B-button interrupt. No unneccesary interrupts wanted.
-  #ifndef ARDUBOY_NO_USB
-    init();                      //restore USB support
-    USBDevice.attach(); 
-  #endif
+    if (UHWCON & _BV(UVREGE)) // Test if USB is enabled
+    {
+      init();                      //restore USB support
+      USBDevice.attach();
+    }
     Arduboy2Core::displayOn();
-#ifndef ARDUBOY_CORE    
     autoPowerDownReset();
-#else
-    //auto power down reset is handled by Arduboy core    
-#endif    
   }
-#ifndef ARDUBOY_CORE    
   if (Arduboy2Core::buttonsState()) autoPowerDownReset(); //reset power down time on any button press
-#endif  
 }
